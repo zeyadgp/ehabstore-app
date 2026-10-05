@@ -1,0 +1,6 @@
+{
+  "name": "إيهاب ستور",
+  "description": "متجر إيهاب ستور لمنتجات العناية والتجميل مع نظام متقدم لإدارة المنتجات والألوان وتكامل رسمي مع Meta وFacebook وInstagram والكتالوج الإعلاني.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

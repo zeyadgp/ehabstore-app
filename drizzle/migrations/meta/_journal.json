@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1788568565076,
+      "tag": "0000_restore_store_schema_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788568677183,
+      "tag": "0001_restore_store_functions_and_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788568825319,
+      "tag": "0002_store_images_bucket_policies",
+      "breakpoints": true
+    }
+  ]
+}

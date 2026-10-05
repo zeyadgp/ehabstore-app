@@ -1,0 +1,3 @@
+GRANT SELECT (id,store_name,logo,whatsapp_number,currency,currency_label,email,phone,address,about,instagram,seo_title,seo_description,seo_keywords,og_image,hero_title,hero_subtitle,hero_image,about_content,contact_content,facebook,tiktok,snapchat,working_hours,store_image,description,twitter,youtube,hide_lovable_badge,app_download_url,ios_app_url,footer_text,copyright_name,copyright_url,meta_shop_url,instagram_shop_url,grid_columns,card_style,brand_text_color,swatch_enabled,swatch_shape,swatch_size,color_families,require_email_confirm,free_delivery_until,delivery_default_fee,delivery_enabled)
+ON public.store_settings TO anon, authenticated;
+GRANT ALL ON public.store_settings TO service_role;

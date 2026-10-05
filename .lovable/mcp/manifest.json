@@ -1,0 +1,189 @@
+{
+  "version": 1,
+  "sdk_version": "0.28.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://omjzyknkcisjmfvqokdj.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "ehab-store-beauty",
+      "version": "0.1.0",
+      "title": "Ehab Store Beauty"
+    },
+    "tools": [
+      {
+        "name": "search_products",
+        "title": "Search products",
+        "description": "Search the store catalog of active products by name or description. Returns price, discount, stock and slug.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "query": {
+              "description": "Text to search in product name/description.",
+              "type": "string",
+              "maxLength": 100
+            },
+            "only_discounted": {
+              "description": "Return only products that have a discount price.",
+              "type": "boolean"
+            },
+            "limit": {
+              "description": "Max products to return (default 20).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_product",
+        "title": "Get product details",
+        "description": "Fetch one active product by its id or slug, including description, price, stock and images.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "id_or_slug": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The product id (uuid) or its slug."
+            }
+          },
+          "required": [
+            "id_or_slug"
+          ]
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_categories",
+        "title": "List categories",
+        "description": "List the store's active categories (hierarchical: parent_id links a subcategory to its parent).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "parent_id": {
+              "description": "Only return children of this category id.",
+              "type": "string"
+            },
+            "top_level_only": {
+              "description": "Only return root categories (no parent).",
+              "type": "boolean"
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_orders",
+        "title": "List store orders",
+        "description": "List recent store orders with their items. Only store admins can read orders; other users get an empty list.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "status": {
+              "description": "Filter by order status.",
+              "type": "string",
+              "enum": [
+                "new",
+                "reviewing",
+                "confirmed",
+                "processing",
+                "shipped",
+                "completed",
+                "cancelled",
+                "ready",
+                "delivered",
+                "returned",
+                "no_contact",
+                "on_hold"
+              ]
+            },
+            "limit": {
+              "description": "Max orders to return (default 20).",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50
+            }
+          }
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_order_status",
+        "title": "Update order status",
+        "description": "Move a store order to a new status. Requires store admin access.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {
+            "order_id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "The order id (uuid)."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "new",
+                "reviewing",
+                "confirmed",
+                "processing",
+                "shipped",
+                "completed",
+                "cancelled",
+                "ready",
+                "delivered",
+                "returned",
+                "no_contact",
+                "on_hold"
+              ],
+              "description": "The new order status."
+            }
+          },
+          "required": [
+            "order_id",
+            "status"
+          ]
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}

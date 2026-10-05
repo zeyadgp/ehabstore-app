@@ -1,0 +1,801 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>تقرير التحليل العكسي وهندسة متطلبات النظام - إيهاب ستور</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              cairo: ["Cairo", "sans-serif"],
+              tajawal: ["Tajawal", "sans-serif"],
+            },
+            colors: {
+              brand: {
+                50: "#fdf8f6",
+                100: "#f2e8e5",
+                500: "#c59d5f",
+                600: "#b08b50",
+                900: "#231f20",
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        font-family: "Cairo", "Tajawal", sans-serif;
+        color: #1e293b;
+        background-color: #f8fafc;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      @media print {
+        @page {
+          size: A4 portrait;
+          margin: 10mm;
+        }
+        body {
+          background-color: #ffffff;
+        }
+        .no-print {
+          display: none !important;
+        }
+        .page-break {
+          page-break-before: always;
+          break-before: page;
+        }
+        .avoid-break {
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
+        .print-shadow-none {
+          box-shadow: none !important;
+        }
+      }
+
+      .badge-verified {
+        background-color: #ecfdf5;
+        color: #047857;
+        border: 1px solid #a7f3d0;
+      }
+      .badge-inferred {
+        background-color: #eff6ff;
+        color: #1d4ed8;
+        border: 1px solid #bfdbfe;
+      }
+      .badge-missing {
+        background-color: #fef2f2;
+        color: #b91c1c;
+        border: 1px solid #fecaca;
+      }
+    </style>
+  </head>
+  <body class="antialiased py-8 px-4 sm:px-8">
+    <!-- شريط الأدوات العلوي الثابت للطباعة والتنزيل -->
+    <div
+      class="no-print max-w-5xl mx-auto mb-8 bg-white border border-slate-200 shadow-lg rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 sticky top-4 z-50"
+    >
+      <div class="flex items-center gap-3">
+        <div
+          class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-black text-xl"
+        >
+          📄
+        </div>
+        <div>
+          <h1 class="text-sm font-bold text-slate-900">تقرير هندسة النظام والتحليل العكسي</h1>
+          <p class="text-xs text-slate-500">جاهز للتحميل المباشر أو الطباعة بصيغة PDF (A4)</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button
+          onclick="window.print()"
+          class="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-sm"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+            ></path>
+          </svg>
+          <span>طباعة / حفظ كـ PDF</span>
+        </button>
+
+        <button
+          id="downloadPdfBtn"
+          onclick="downloadDirectPdf()"
+          class="flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-sm"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            ></path>
+          </svg>
+          <span>تحميل PDF مباشر</span>
+        </button>
+
+        <a
+          href="/admin"
+          class="flex items-center gap-1.5 border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 px-3 py-2.5 rounded-xl text-xs font-semibold transition"
+        >
+          <span>لوحة التحكم</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- محتوى التقرير الرئيسي الذي سيتم تصديره إلى PDF -->
+    <div
+      id="report-content"
+      class="max-w-5xl mx-auto bg-white p-8 sm:p-12 rounded-3xl border border-slate-200 shadow-sm print:p-0 print:border-none print:shadow-none"
+    >
+      <!-- ترويسة التقرير -->
+      <div
+        class="border-b-2 border-slate-900 pb-6 mb-8 flex flex-wrap items-start justify-between gap-4"
+      >
+        <div>
+          <div class="flex items-center gap-2 mb-2">
+            <span
+              class="bg-amber-100 text-amber-800 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border border-amber-300"
+              >وثيقة هندسية رسمية</span
+            >
+            <span
+              class="bg-slate-100 text-slate-700 text-[11px] font-bold px-2.5 py-0.5 rounded-full"
+              >Reverse Engineering Spec</span
+            >
+          </div>
+          <h1 class="text-3xl font-black text-slate-950 tracking-tight">
+            تقرير التحليل العكسي وهندسة المتطلبات
+          </h1>
+          <p class="text-base font-semibold text-amber-700 mt-1">
+            مشروع منصة التجارة الإلكترونية: إيهاب ستور (Ehab Store)
+          </p>
+        </div>
+
+        <div
+          class="text-left font-mono text-xs text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100"
+        >
+          <div><strong class="text-slate-700">تاريخ التحليل:</strong> سبتمبر 2026</div>
+          <div><strong class="text-slate-700">الإصدار:</strong> 1.0 (Production Analysis)</div>
+          <div><strong class="text-slate-700">البيئة:</strong> TanStack Start / Supabase</div>
+        </div>
+      </div>
+
+      <!-- دليل التصنيف المنهجي -->
+      <div
+        class="mb-8 p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-center justify-between gap-3 text-xs avoid-break"
+      >
+        <span class="font-bold text-slate-700">منهجية التصنيف المعتمدة بالتقرير:</span>
+        <div class="flex flex-wrap gap-2">
+          <span class="badge-verified px-3 py-1 rounded-lg font-bold">✓ مؤكدة من المواد</span>
+          <span class="badge-inferred px-3 py-1 rounded-lg font-bold">~ مستنتجة منطقياً</span>
+          <span class="badge-missing px-3 py-1 rounded-lg font-bold">? غير متوفرة بالكود</span>
+        </div>
+      </div>
+
+      <!-- 1. الملخص التنفيذي -->
+      <section class="mb-10 avoid-break">
+        <h2
+          class="text-xl font-black text-slate-900 mb-4 pb-2 border-b border-slate-200 flex items-center gap-2"
+        >
+          <span class="text-amber-600">01.</span> الملخص التنفيذي للمشروع
+        </h2>
+
+        <div class="overflow-x-auto">
+          <table
+            class="w-full text-xs text-right border-collapse border border-slate-200 rounded-xl overflow-hidden"
+          >
+            <thead class="bg-slate-100 text-slate-900 font-bold">
+              <tr>
+                <th class="p-3 border border-slate-200 w-1/4">العنصر</th>
+                <th class="p-3 border border-slate-200 w-1/2">التفاصيل المستخرجة من الكود</th>
+                <th class="p-3 border border-slate-200 w-1/4 text-center">التصنيف</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+              <tr>
+                <td class="p-3 font-bold bg-slate-50/50">اسم المشروع</td>
+                <td class="p-3">إيهاب ستور (Ehab Store)</td>
+                <td class="p-3 text-center">
+                  <span class="badge-verified px-2 py-0.5 rounded text-[10px] font-bold"
+                    >مؤكدة من المواد</span
+                  >
+                </td>
+              </tr>
+              <tr>
+                <td class="p-3 font-bold bg-slate-50/50">المجال التجاري</td>
+                <td class="p-3">تجارة إلكترونية تجزئة (B2C) متخصصة بالعناية والتجميل والعطور</td>
+                <td class="p-3 text-center">
+                  <span class="badge-verified px-2 py-0.5 rounded text-[10px] font-bold"
+                    >مؤكدة من المواد</span
+                  >
+                </td>
+              </tr>
+              <tr>
+                <td class="p-3 font-bold bg-slate-50/50">السوق المستهدف</td>
+                <td class="p-3">المحافظات اليمنية، مع إدارة شحن متعددة المناطق وتعدد العملات</td>
+                <td class="p-3 text-center">
+                  <span class="badge-verified px-2 py-0.5 rounded text-[10px] font-bold"
+                    >مؤكدة من المواد</span
+                  >
+                </td>
+              </tr>
+              <tr>
+                <td class="p-3 font-bold bg-slate-50/50">النموذج البرمجي</td>
+                <td class="p-3">
+                  React 19 + TanStack Start (SSR/Full-Stack) + Vite + Tailwind CSS 4
+                </td>
+                <td class="p-3 text-center">
+                  <span class="badge-verified px-2 py-0.5 rounded text-[10px] font-bold"
+                    >مؤكدة من المواد</span
+                  >
+                </td>
+              </tr>
+              <tr>
+                <td class="p-3 font-bold bg-slate-50/50">الواجهة الخلفية والخوادم</td>
+                <td class="p-3">Supabase (PostgreSQL 14.5, Auth, Storage, RLS, Edge Functions)</td>
+                <td class="p-3 text-center">
+                  <span class="badge-verified px-2 py-0.5 rounded text-[10px] font-bold"
+                    >مؤكدة من المواد</span
+                  >
+                </td>
+              </tr>
+              <tr>
+                <td class="p-3 font-bold bg-slate-50/50">الذكاء الاصطناعي والتكاملات</td>
+                <td class="p-3">Google Gemini AI، Meta CAPI/Pixel، WhatsApp، خرائط Leaflet</td>
+                <td class="p-3 text-center">
+                  <span class="badge-verified px-2 py-0.5 rounded text-[10px] font-bold"
+                    >مؤكدة من المواد</span
+                  >
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 2 & 3. المشكلة والأهداف -->
+      <section class="mb-10 avoid-break">
+        <h2
+          class="text-xl font-black text-slate-900 mb-4 pb-2 border-b border-slate-200 flex items-center gap-2"
+        >
+          <span class="text-amber-600">02.</span> المشكلة التي يحلها النظام والأهداف
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+            <h3 class="font-bold text-slate-900 text-sm mb-2 flex items-center gap-1.5">
+              <span class="text-red-600 font-bold">●</span> المشكلات المعالجة:
+            </h3>
+            <ul class="space-y-1.5 text-slate-600 list-disc list-inside">
+              <li>
+                <strong>تذبذب أسعار الصرف:</strong> حلها بالتحويل الديناميكي اللحظي بين الريال
+                اليمني، السعودي، والدولار.
+                <span class="badge-verified px-1.5 py-0.2 rounded text-[9px]">مؤكدة</span>
+              </li>
+              <li>
+                <strong>عناوين التوصيل غير الدقيقة:</strong> حلها بمنتقي الخرائط الجغرافية (Leaflet
+                MapPicker).
+                <span class="badge-verified px-1.5 py-0.2 rounded text-[9px]">مؤكدة</span>
+              </li>
+              <li>
+                <strong>تنوع خيارات التجميل:</strong> دعم مخصص لتدرجات الألوان الحقيقية، الأكواد
+                اللونية، والمقاسات.
+                <span class="badge-verified px-1.5 py-0.2 rounded text-[9px]">مؤكدة</span>
+              </li>
+              <li>
+                <strong>فقدان تتبع الإعلانات:</strong> حلها بالربط المزدوج لـ Meta Pixel و
+                Conversions API من الخادم.
+                <span class="badge-verified px-1.5 py-0.2 rounded text-[9px]">مؤكدة</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+            <h3 class="font-bold text-slate-900 text-sm mb-2 flex items-center gap-1.5">
+              <span class="text-emerald-600 font-bold">●</span> الأهداف الاستراتيجية:
+            </h3>
+            <ul class="space-y-1.5 text-slate-600 list-disc list-inside">
+              <li>
+                تجربة شراء لحظية سريعة تدعم الشراء كزائر دون إلزام التسجيل الفوري.
+                <span class="badge-verified px-1.5 py-0.2 rounded text-[9px]">مؤكدة</span>
+              </li>
+              <li>
+                تحفيز تكرار الشراء عبر منظومة ولاء (نقاط، فئات، تسجيل حضور يومي، وإحالات).
+                <span class="badge-verified px-1.5 py-0.2 rounded text-[9px]">مؤكدة</span>
+              </li>
+              <li>
+                أتمتة الفواتير وسندات القبض ومشاركتها مباشرة عبر WhatsApp.
+                <span class="badge-verified px-1.5 py-0.2 rounded text-[9px]">مؤكدة</span>
+              </li>
+              <li>
+                خفض تكاليف صناعة المحتوى عبر التوليد الآلي لصور المنتجات بواسطة AI.
+                <span class="badge-verified px-1.5 py-0.2 rounded text-[9px]">مؤكدة</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4 & 6. المستخدمون والأدوار والصلاحيات -->
+      <section class="mb-10 avoid-break">
+        <h2
+          class="text-xl font-black text-slate-900 mb-4 pb-2 border-b border-slate-200 flex items-center gap-2"
+        >
+          <span class="text-amber-600">03.</span> المستخدمون ومنظومة الأدوار والصلاحيات (RBAC)
+        </h2>
+
+        <div class="overflow-x-auto">
+          <table
+            class="w-full text-xs text-right border-collapse border border-slate-200 rounded-xl"
+          >
+            <thead class="bg-slate-100 text-slate-900 font-bold">
+              <tr>
+                <th class="p-2.5 border border-slate-200">الدور (Role)</th>
+                <th class="p-2.5 border border-slate-200">نطاق الوصول</th>
+                <th class="p-2.5 border border-slate-200">الميزات والمسارات المتاحة</th>
+                <th class="p-2.5 border border-slate-200 text-center">التصنيف</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+              <tr>
+                <td class="p-2.5 font-bold">مدير النظام (Super Admin)</td>
+                <td class="p-2.5">وصول شامل لكل جداول ومسارات النظام</td>
+                <td class="p-2.5">
+                  إدارة كاملة للمنتجات، العملات، الفواتير، المستخدمين، والصلاحيات
+                </td>
+                <td class="p-2.5 text-center">
+                  <span class="badge-verified px-2 py-0.5 rounded text-[10px] font-bold"
+                    >مؤكدة من المواد</span
+                  >
+                </td>
+              </tr>
+              <tr>
+                <td class="p-2.5 font-bold">مشرف المتجر (Staff / Manager)</td>
+                <td class="p-2.5">عملياتي ومبيعات</td>
+                <td class="p-2.5">متابعة وتحديث الطلبات، تتبع المخزون، والرد على التقييمات</td>
+                <td class="p-2.5 text-center">
+                  <span class="badge-verified px-2 py-0.5 rounded text-[10px] font-bold"
+                    >مؤكدة من المواد</span
+                  >
+                </td>
+              </tr>
+              <tr>
+                <td class="p-2.5 font-bold">عميل مسجل (Customer)</td>
+                <td class="p-2.5">حسابه الشخصي فقط</td>
+                <td class="p-2.5">كسب واستبدال النقاط، سجل الطلبات، الفواتير، وكتابة التقييمات</td>
+                <td class="p-2.5 text-center">
+                  <span class="badge-verified px-2 py-0.5 rounded text-[10px] font-bold"
+                    >مؤكدة من المواد</span
+                  >
+                </td>
+              </tr>
+              <tr>
+                <td class="p-2.5 font-bold">زائر (Guest)</td>
+                <td class="p-2.5">المتجر العام والطلب</td>
+                <td class="p-2.5">التصفح، البحث، السلة، والمفضلة وإتمام الطلب برقم الهاتف</td>
+                <td class="p-2.5 text-center">
+                  <span class="badge-verified px-2 py-0.5 rounded text-[10px] font-bold"
+                    >مؤكدة من المواد</span
+                  >
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 8. جدول المتطلبات الوظيفية -->
+      <section class="mb-10 page-break">
+        <h2
+          class="text-xl font-black text-slate-900 mb-4 pb-2 border-b border-slate-200 flex items-center gap-2"
+        >
+          <span class="text-amber-600">04.</span> جدول المتطلبات الوظيفية المفصلة (Functional
+          Requirements)
+        </h2>
+
+        <div class="overflow-x-auto">
+          <table
+            class="w-full text-xs text-right border-collapse border border-slate-200 rounded-xl"
+          >
+            <thead class="bg-slate-100 text-slate-900 font-bold">
+              <tr>
+                <th class="p-2.5 border border-slate-200 w-16">المعرف</th>
+                <th class="p-2.5 border border-slate-200 w-44">المتطلب</th>
+                <th class="p-2.5 border border-slate-200">الوصف الوظيفي الدقيق</th>
+                <th class="p-2.5 border border-slate-200 w-28 text-center">التصنيف</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+              <tr>
+                <td class="p-2.5 font-mono font-bold">REQ-F01</td>
+                <td class="p-2.5 font-bold">تصفح الكتالوج والبحث</td>
+                <td class="p-2.5">
+                  بحث بالكلمات المفتاحية و SKU، تصنيف هرمي (شجرة أقسام وماركات وأقسام ذكية)، وفلترة
+                  متقدمة.
+                </td>
+                <td class="p-2.5 text-center">
+                  <span class="badge-verified px-2 py-0.5 rounded text-[10px]">مؤكدة</span>
+                </td>
+              </tr>
+              <tr>
+                <td class="p-2.5 font-mono font-bold">REQ-F02</td>
+                <td class="p-2.5 font-bold">الخيارات متعددة الأبعاد</td>
+                <td class="p-2.5">
+                  دعم تدرجات الألوان مع رمز Hex وصور مخصصة لكل لون، وتحديد مقاسات وأسعار بديلة.
+                </td>
+                <td class="p-2.5 text-center">
+                  <span class="badge-verified px-2 py-0.5 rounded text-[10px]">مؤكدة</span>
+                </td>
+              </tr>
+              <tr>
+                <td class="p-2.5 font-mono font-bold">REQ-F03</td>
+                <td class="p-2.5 font-bold">السلة والدفع الجغرافي</td>
+                <td class="p-2.5">
+                  سلة شراء ديناميكية، تطبيق كوبونات الخصم، وتحديد موقع التسليم بدقة عبر خريطة
+                  تفاعلية.
+                </td>
+                <td class="p-2.5 text-center">
+                  <span class="badge-verified px-2 py-0.5 rounded text-[10px]">مؤكدة</span>
+                </td>
+              </tr>
+              <tr>
+                <td class="p-2.5 font-mono font-bold">REQ-F04</td>
+                <td class="p-2.5 font-bold">معاملات الطلبات الآمنة</td>
+                <td class="p-2.5">
+                  تنفيذ الطلب بدالة ذرية (Atomic Transaction) لخصم المخزون وإنشاء الفاتورة ورقم
+                  الطلب.
+                </td>
+                <td class="p-2.5 text-center">
+                  <span class="badge-verified px-2 py-0.5 rounded text-[10px]">مؤكدة</span>
+                </td>
+              </tr>
+              <tr>
+                <td class="p-2.5 font-mono font-bold">REQ-F05</td>
+                <td class="p-2.5 font-bold">تعدد العملات والتحويل</td>
+                <td class="p-2.5">
+                  تحديد العملة الأساسية وإمكانية التسوق بعدة عملات وفق أسعار صرف قابلة للتعديل
+                  إدارياً.
+                </td>
+                <td class="p-2.5 text-center">
+                  <span class="badge-verified px-2 py-0.5 rounded text-[10px]">مؤكدة</span>
+                </td>
+              </tr>
+              <tr>
+                <td class="p-2.5 font-mono font-bold">REQ-F06</td>
+                <td class="p-2.5 font-bold">برنامج الولاء والتحفيز</td>
+                <td class="p-2.5">
+                  كسب نقاط عند الشراء، مكافأة الدخول اليومي، مكافآت الإحالة واستبدال النقاط بكوبونات
+                  فورية.
+                </td>
+                <td class="p-2.5 text-center">
+                  <span class="badge-verified px-2 py-0.5 rounded text-[10px]">مؤكدة</span>
+                </td>
+              </tr>
+              <tr>
+                <td class="p-2.5 font-mono font-bold">REQ-F07</td>
+                <td class="p-2.5 font-bold">تنبيهات الطلبات الإدارية</td>
+                <td class="p-2.5">
+                  تنبيهات صوتية وبصرية للمدير فور وصول طلب، مع شارة عدّاد ديناميكية في الرأس
+                  والقائمة.
+                </td>
+                <td class="p-2.5 text-center">
+                  <span class="badge-verified px-2 py-0.5 rounded text-[10px]">مؤكدة</span>
+                </td>
+              </tr>
+              <tr>
+                <td class="p-2.5 font-mono font-bold">REQ-F08</td>
+                <td class="p-2.5 font-bold">التوليد الذكي للصور</td>
+                <td class="p-2.5">
+                  توليد ومعالجة صور الأقسام والمنتجات واللافتات التسويقية باستخدام Google Gemini.
+                </td>
+                <td class="p-2.5 text-center">
+                  <span class="badge-verified px-2 py-0.5 rounded text-[10px]">مؤكدة</span>
+                </td>
+              </tr>
+              <tr>
+                <td class="p-2.5 font-mono font-bold">REQ-F09</td>
+                <td class="p-2.5 font-bold">تكامل واتساب المباشر</td>
+                <td class="p-2.5">
+                  تنسيق قوالب رسائل تتبع الطلب والفاتورة والتحويل إلى WhatsApp بضغطة زر واحدة.
+                </td>
+                <td class="p-2.5 text-center">
+                  <span class="badge-verified px-2 py-0.5 rounded text-[10px]">مؤكدة</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 9. جدول المتطلبات غير الوظيفية -->
+      <section class="mb-10 avoid-break">
+        <h2
+          class="text-xl font-black text-slate-900 mb-4 pb-2 border-b border-slate-200 flex items-center gap-2"
+        >
+          <span class="text-amber-600">05.</span> جدول المتطلبات غير الوظيفية (Non-Functional
+          Requirements)
+        </h2>
+
+        <div class="overflow-x-auto">
+          <table
+            class="w-full text-xs text-right border-collapse border border-slate-200 rounded-xl"
+          >
+            <thead class="bg-slate-100 text-slate-900 font-bold">
+              <tr>
+                <th class="p-2.5 border border-slate-200 w-36">المعيار</th>
+                <th class="p-2.5 border border-slate-200">المواصفة الفنية المحققة في المشروع</th>
+                <th class="p-2.5 border border-slate-200 w-28 text-center">التصنيف</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+              <tr>
+                <td class="p-2.5 font-bold">سرعة الاستجابة والأداء</td>
+                <td class="p-2.5">
+                  رندرة من الخادم (SSR) عبر TanStack Start وضغط تلقائي للصور بصيغة WebP الحديثة.
+                </td>
+                <td class="p-2.5 text-center">
+                  <span class="badge-verified px-2 py-0.5 rounded text-[10px]">مؤكدة</span>
+                </td>
+              </tr>
+              <tr>
+                <td class="p-2.5 font-bold">أمان البيانات والخصوصية</td>
+                <td class="p-2.5">
+                  تطبيق RLS على مستوى جداول Supabase، وتأمين المفاتيح الحساسة في طبقة الخادم.
+                </td>
+                <td class="p-2.5 text-center">
+                  <span class="badge-verified px-2 py-0.5 rounded text-[10px]">مؤكدة</span>
+                </td>
+              </tr>
+              <tr>
+                <td class="p-2.5 font-bold">إمكانية التثبيت (PWA)</td>
+                <td class="p-2.5">
+                  ملف Service Worker مدمج و Manifest لدعم تثبيت الموقع كتطبيق على الشاشة الرئيسية.
+                </td>
+                <td class="p-2.5 text-center">
+                  <span class="badge-verified px-2 py-0.5 rounded text-[10px]">مؤكدة</span>
+                </td>
+              </tr>
+              <tr>
+                <td class="p-2.5 font-bold">التجاوب مع الشاشات</td>
+                <td class="p-2.5">
+                  تصميم متجاوب متكامل (Mobile-First) ملائم للهواتف الذكية والأجهزة اللوحية
+                  والحواسيب.
+                </td>
+                <td class="p-2.5 text-center">
+                  <span class="badge-verified px-2 py-0.5 rounded text-[10px]">مؤكدة</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 11 & 12. المخططات المعمارية والتقنية -->
+      <section class="mb-10 page-break">
+        <h2
+          class="text-xl font-black text-slate-900 mb-4 pb-2 border-b border-slate-200 flex items-center gap-2"
+        >
+          <span class="text-amber-600">06.</span> البنية المعمارية ومخطط المكونات (Component
+          Diagram)
+        </h2>
+
+        <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl mb-6 text-center">
+          <div class="mermaid text-xs">
+            graph TD Client[المتصفح / الهاتف PWA] -->|طلب صفحات SSR| Nitro[خادم Nitro / TanStack
+            Start] Client -->|استعلامات البيانات React Query| PostgREST[Supabase PostgREST API]
+            Client -->|المصادقة Tokens| SupabaseAuth[Supabase Auth Service] subgraph ServerLayer
+            [طبقة الخادم Server Functions] Nitro --> Functions[دوال الخادم الآمنة ServerFn]
+            Functions --> Gemini[Google Gemini AI] Functions --> MetaAPI[Meta Conversions API] end
+            subgraph CloudLayer [طبقة قاعدة البيانات والتخزين السحابي] Functions --> DB[(Supabase
+            PostgreSQL 14.5)] PostgREST --> DB Client --> Storage[Supabase Storage Buckets] end
+          </div>
+        </div>
+      </section>
+
+      <!-- 13. مخطط العلاقات الكيانية ERD -->
+      <section class="mb-10 avoid-break">
+        <h2
+          class="text-xl font-black text-slate-900 mb-4 pb-2 border-b border-slate-200 flex items-center gap-2"
+        >
+          <span class="text-amber-600">07.</span> مخطط قاعدة البيانات (ERD Diagram - 35 Tables)
+        </h2>
+
+        <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-center">
+          <div class="mermaid text-xs">
+            erDiagram PROFILES ||--o{ ORDERS : places PROFILES ||--o| LOYALTY_ACCOUNTS : owns
+            CATEGORIES ||--o{ PRODUCTS : contains CATEGORIES ||--o{ CATEGORIES : parent_of BRANDS
+            ||--o{ PRODUCTS : manufactures PRODUCTS ||--o{ PRODUCT_OPTIONS : has PRODUCTS ||--o{
+            PRODUCT_COLORS : has PRODUCTS ||--o{ PRODUCT_REVIEWS : receives ORDERS ||--|{
+            ORDER_ITEMS : includes PRODUCTS ||--o{ ORDER_ITEMS : referenced_in ORDERS ||--o|
+            INVOICES : bills DELIVERY_ZONES ||--o{ ORDERS : delivers_to LOYALTY_ACCOUNTS ||--o{
+            LOYALTY_TRANSACTIONS : logs DISCOUNT_COUPONS ||--o{ COUPON_REDEMPTIONS : tracked_by
+          </div>
+        </div>
+      </section>
+
+      <!-- 14. مخطط حالات الاستخدام Use Case Diagram -->
+      <section class="mb-10 avoid-break">
+        <h2
+          class="text-xl font-black text-slate-900 mb-4 pb-2 border-b border-slate-200 flex items-center gap-2"
+        >
+          <span class="text-amber-600">08.</span> مخطط حالات الاستخدام (Use Case Diagram)
+        </h2>
+
+        <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-center">
+          <div class="mermaid text-xs">
+            graph LR User[المتسوق / الزائر] --> UC1[تصفح المنتجات والأقسام والبحث] User -->
+            UC2[إدارة السلة وقسائم التخفيض] User --> UC3[إتمام الطلب وتحديد الموقع الجغرافي] User
+            --> UC4[حساب النقاط ومكافآت الولاء اليومية] Admin[مدير النظام] --> UC5[إدارة الكتالوج
+            والمخزون والتسعير] Admin --> UC6[تحديث حالات الطلبات وإصدار الفواتير] Admin -->
+            UC7[إدارة الصلاحيات والمستخدمين RBAC] Admin --> UC8[توليد الصور بالذكاء الاصطناعي] Admin
+            --> UC9[إدارة الربط الإعلاني مع Meta]
+          </div>
+        </div>
+      </section>
+
+      <!-- 18 & 19 & 20. القيود والمخاطر والديون التقنية -->
+      <section class="mb-10 page-break">
+        <h2
+          class="text-xl font-black text-slate-900 mb-4 pb-2 border-b border-slate-200 flex items-center gap-2"
+        >
+          <span class="text-amber-600">09.</span> المخاطر الحالية والديون التقنية (Technical Debt)
+        </h2>
+
+        <div class="overflow-x-auto">
+          <table
+            class="w-full text-xs text-right border-collapse border border-slate-200 rounded-xl"
+          >
+            <thead class="bg-slate-100 text-slate-900 font-bold">
+              <tr>
+                <th class="p-2.5 border border-slate-200">البند</th>
+                <th class="p-2.5 border border-slate-200">مستوى الخطورة</th>
+                <th class="p-2.5 border border-slate-200">التوصيف الفني والتأثير</th>
+                <th class="p-2.5 border border-slate-200">الإجراء التصحيحي المقترح</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+              <tr>
+                <td class="p-2.5 font-bold">تحذيرات مكتبة TanStack Start</td>
+                <td class="p-2.5">
+                  <span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold"
+                    >متوسطة</span
+                  >
+                </td>
+                <td class="p-2.5">
+                  استخدام <code>inputValidator()</code> القديم في دوال الخادم بدلاً من
+                  <code>validator()</code>.
+                </td>
+                <td class="p-2.5">
+                  تحديث بناء دوال <code>createServerFn</code> لتفادي التعطل عند الترقية القادمة.
+                </td>
+              </tr>
+              <tr>
+                <td class="p-2.5 font-bold">عدم التحقق من رقم الهاتف بـ OTP</td>
+                <td class="p-2.5">
+                  <span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold"
+                    >متوسطة</span
+                  >
+                </td>
+                <td class="p-2.5">إمكانية إرسال طلبات غير مؤكدة عند الدفع عند الاستلام.</td>
+                <td class="p-2.5">تفعيل خدمة إرسال رمز تحقق سريع عبر رسالة SMS أو WhatsApp.</td>
+              </tr>
+              <tr>
+                <td class="p-2.5 font-bold">تحذيرات Fast Refresh</td>
+                <td class="p-2.5">
+                  <span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold"
+                    >منخفضة</span
+                  >
+                </td>
+                <td class="p-2.5">
+                  تصدير دوال ومساعدات برمجية بجانب المكونات الرسومية في بعض ملفات <code>lib/</code>.
+                </td>
+                <td class="p-2.5">فصل الدوال المساعدة في ملفات مستقلة نظيفة.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 22. التوصيات وخريطة الطريق -->
+      <section class="mb-8 avoid-break">
+        <h2
+          class="text-xl font-black text-slate-900 mb-4 pb-2 border-b border-slate-200 flex items-center gap-2"
+        >
+          <span class="text-amber-600">10.</span> التوصيات الفنية وخريطة الطريق
+        </h2>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+          <div class="p-4 bg-emerald-50/60 border border-emerald-200 rounded-2xl">
+            <div class="font-bold text-emerald-900 mb-1">
+              المرحلة الأولى: تعزيز الأمان والاعتمادية
+            </div>
+            <p class="text-slate-600">
+              تحديث دوال الـ validator وتفعيل التحقق برمز OTP قبل تسجيل الطلبات للحد من الطلبات
+              الوهمية.
+            </p>
+          </div>
+          <div class="p-4 bg-blue-50/60 border border-blue-200 rounded-2xl">
+            <div class="font-bold text-blue-900 mb-1">المرحلة الثانية: تكامل الدفع الإلكتروني</div>
+            <p class="text-slate-600">
+              ربط محافظ النقد الإلكتروني المحلية (كريمي جوال، فلوسك، ون كاش) لتسريع التحصيل.
+            </p>
+          </div>
+          <div class="p-4 bg-amber-50/60 border border-amber-200 rounded-2xl">
+            <div class="font-bold text-amber-900 mb-1">المرحلة الثالثة: أتمتة سلاسل الإمداد</div>
+            <p class="text-slate-600">
+              إطلاق تطبيق خاص بمندوبي التوصيل لمتابعة خطوط السير وتأكيد تسليم الشحنات لحظياً.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- تذييل الوثيقة -->
+      <div
+        class="mt-12 pt-6 border-t border-slate-200 text-center text-[11px] text-slate-400 flex items-center justify-between"
+      >
+        <span>متجر إيهاب ستور للعناية والتجميل • وثيقة التحليل العكسي لنظم المعلومات</span>
+        <span>صفحة 1 من 1 • تم الاستخراج آلياً من الكود المصدري</span>
+      </div>
+    </div>
+
+    <script>
+      // تفعيل مخططات Mermaid عند التحميل
+      mermaid.initialize({
+        startOnLoad: true,
+        theme: "neutral",
+        fontFamily: "Cairo",
+      });
+
+      // تحميل ملف PDF مباشر بنقرة واحدة
+      function downloadDirectPdf() {
+        const btn = document.getElementById("downloadPdfBtn");
+        const originalText = btn.innerHTML;
+        btn.innerHTML = "جاري تحضير الـ PDF...";
+        btn.disabled = true;
+
+        const element = document.getElementById("report-content");
+        const opt = {
+          margin: [10, 10, 10, 10],
+          filename: "تقرير-هندسة-النظام-إيهاب-ستور.pdf",
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        };
+
+        html2pdf()
+          .set(opt)
+          .from(element)
+          .save()
+          .then(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+          })
+          .catch((err) => {
+            console.error(err);
+            window.print();
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+          });
+      }
+    </script>
+  </body>
+</html>
